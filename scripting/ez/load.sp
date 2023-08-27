@@ -1,28 +1,10 @@
-#include <sourcemod>
-#include <adt>
-#include <regex>
-#include "pluginsyswrapper"
+static Regex pluginExtensionRegex;
 
-#pragma newdecls required
-#pragma semicolon 1
-
-public Plugin myinfo =
-{
-    name = "EZ Load Unload",
-    author = "Monera",
-    description = "Plugin that allows easy load/unload plugins by utilizing pluginsys wrapper",
-    version = "0.0.1",
-    url = ""
-};
-
-Regex pluginExtensionRegex;
-
-public void OnPluginStart()
+void Init_Load()
 {
     pluginExtensionRegex = new Regex("\\.smx$");
 
     RegServerCmd("sm_ezload", SvrCmd_EZLoad, "Load plugins whose path starts with given substring");
-    RegServerCmd("sm_ezunload", SvrCmd_EZUnload, "Unload plugins whose path starts with given substring");
 }
 
 public Action SvrCmd_EZLoad(int args)
@@ -58,47 +40,13 @@ public Action SvrCmd_EZLoad(int args)
             failure += 1;
         }
     }
+    delete list;
 
     PrintToServer("[EZ] %d plugins are loaded", length - failure);
 
     return Plugin_Handled;
 }
 
-public Action SvrCmd_EZUnload(int args)
-{
-    if(args != 1)
-    {
-        PrintToServer("Usage: sm_ezunload (string)");
-        return Plugin_Handled;
-    }
-
-    char substring[PLATFORM_MAX_PATH];
-    GetCmdArg(1, substring, sizeof(substring));
-
-    ArrayList list = ListLoadedPlugins(substring);
-    int length = list.Length;
-    int failure = 0;
-    Handle myself = GetMyHandle();
-    for(int i = 0; i < length; i++)
-    {
-        Handle plugin = list.Get(i);
-        if(plugin == myself)
-        {
-            char path[PLATFORM_MAX_PATH];
-            GetPluginFilename(null, path, sizeof(path));
-            PrintToServer("[EZ] Plugin %s failed to unload: Unloading itself is not allowed", path);
-            failure += 1;
-            continue;
-        }
-        UnloadPlugin(list.Get(i));
-    }
-
-    PrintToServer("[EZ] %d plugins are unloaded", length - failure);
-
-    return Plugin_Handled;
-}
-
-// BFS
 stock ArrayList ListPlugins(const char[] startsWith)
 {
     int startsWithLength = strlen(startsWith);
@@ -154,31 +102,6 @@ stock ArrayList ListPlugins(const char[] startsWith)
         delete directoryListing;
     }
     delete stack;
-
-    return list;
-}
-
-stock ArrayList ListLoadedPlugins(const char[] startsWith)
-{
-    int startsWithLength = strlen(startsWith);
-    
-    ArrayList list = new ArrayList();
-
-    Handle it = GetPluginIterator();
-    while(MorePlugins(it))
-    {
-        Handle plugin = ReadPlugin(it);
-
-        char path[PLATFORM_MAX_PATH];
-        GetPluginFilename(plugin, path, sizeof(path));
-
-        if(strncmp(path, startsWith, startsWithLength) != 0)
-        {
-            continue;
-        }
-        list.Push(plugin);
-    }
-    delete it;
 
     return list;
 }
