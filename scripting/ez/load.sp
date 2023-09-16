@@ -1,3 +1,5 @@
+#define LOAD_MAX_TRIES (4)
+
 static Regex pluginExtensionRegex;
 
 void Init_Load()
@@ -19,30 +21,40 @@ public Action SvrCmd_EZLoad(int args)
     GetCmdArg(1, substring, sizeof(substring));
 
     ArrayList list = ListPlugins(substring);
-    int length = list.Length;
-    int failure = 0;
-    for(int i = 0; i < length; i++)
+    int success = 0;
+
+    for(int i = 0; i < LOAD_MAX_TRIES && list.Length != 0; i++)
     {
-        char path[PLATFORM_MAX_PATH];
-        char err[256];
-        bool wasloaded;
-
-        list.GetString(i, path, sizeof(path));
-        Handle plugin = LoadPluginEx(path, err, sizeof(err), wasloaded);
-
-        if(plugin == null)
+        int j = 0;
+        while(j < list.Length)
         {
-            PrintToServer("[EZ] Plugin %s failed to load: %s", path, err);
-            failure += 1;
-        }
-        else if(wasloaded)
-        {
-            failure += 1;
+            char path[PLATFORM_MAX_PATH];
+            char err[256];
+            bool wasloaded;
+
+            list.GetString(j, path, sizeof(path));
+            Handle plugin = LoadPluginEx(path, err, sizeof(err), wasloaded);
+
+            if(plugin)
+            {
+                if(!wasloaded)
+                {
+                    success += 1;
+                }
+
+                list.Erase(j);
+            }
+            else
+            {
+                PrintToServer("[EZ] Plugin %s failed to load: %s", path, err);
+                j += 1;
+            }
         }
     }
+
     delete list;
 
-    PrintToServer("[EZ] %d plugins are loaded", length - failure);
+    PrintToServer("[EZ] %d plugins are loaded", success);
 
     return Plugin_Handled;
 }
