@@ -11,7 +11,7 @@ public Action SvrCmd_EZLoad(int args)
 {
     if(args != 1)
     {
-        PrintToServer("Usage: sm_ezload (string)");
+        PrintToServer("Usage: sm_ezload <string>: Load plugins whose path starts with given substring");
         return Plugin_Handled;
     }
 

@@ -7,7 +7,7 @@ public Action SvrCmd_EZUnload(int args)
 {
     if(args != 1)
     {
-        PrintToServer("Usage: sm_ezunload (string)");
+        PrintToServer("Usage: sm_ezunload <string>: Unload plugins whose path starts with given substring");
         return Plugin_Handled;
     }
 

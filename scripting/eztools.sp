@@ -3,7 +3,7 @@
 #include <adt>
 #include <regex>
 
-#include "pluginsyswrapper"
+#include "publicinterfacewrapper"
 
 #pragma newdecls required
 #pragma semicolon 1
